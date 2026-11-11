@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lookalike Guard Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #ffffff; --fg: #1d2330; --muted: #6b7385; --line: #e3e6ee;
+    --blue: #3b6fd8; --amber: #d48a12; --green: #1f9d63; --red: #d64545; --slate: #5b6478; --violet: #7a5af0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1218; --card: #171b23; --fg: #e6e9f0; --muted: #8b93a5; --line: #262c38;
+      --blue: #6d97f0; --amber: #f0b44a; --green: #3fc98a; --red: #f07070; --slate: #9aa3b8; --violet: #a08cff;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; padding: 16px; display: flex; flex-direction: column; background: var(--bg); color: var(--fg);
+    font: 15px/1.55 Inter, system-ui, sans-serif;
+  }
+  main { width: 100%; max-width: 1800px; margin: 0 auto; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  header { margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 2px 0 2px; font-weight: 700; letter-spacing: -.01em; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px; border-radius: 999px;
+    background: var(--card); border: 1px solid var(--line); font-size: 13px; color: var(--fg);
+  }
+  .chip i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+  .panels { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.05fr 1.15fr 1.1fr .85fr; gap: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
+    box-shadow: 0 1px 2px #0000000a, 0 8px 24px #0000000d; min-height: 0; display: flex; flex-direction: column;
+    border-top: 3px solid var(--accent, var(--blue));
+  }
+  .card h2 { margin: 0; font-size: 15px; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .card h2 b {
+    width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent, var(--blue)); color: var(--card); font-size: 12px;
+  }
+  .card h2 code { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .card p { margin: 2px 0 0 30px; font-size: 12.5px; color: var(--muted); }
+  .graph { flex: 1; min-height: 0; margin-top: 8px; }
+  .graph svg { width: 100%; height: 100%; max-width: none !important; } /* scales to fit: no scroll */
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
+  @media (max-width: 1100px), (max-height: 480px) {
+    html, body { height: auto; }
+    .panels { grid-template-columns: 1fr 1fr; }
+    .graph { height: 75vh; flex: none; }
+  }
+  @media (max-width: 700px) { .panels { grid-template-columns: 1fr; } }
+</style>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Lookalike Domain Guard</div>
+      <h1>How a page visit gets checked</h1>
+      <p>Fast offline check first. Unknown domains get an online age check.</p>
+    </div>
+    <div class="legend">
+      <span class="chip" style="--c: var(--blue)"><i></i>Browser event</span>
+      <span class="chip" style="--c: var(--slate)"><i></i>Step</span>
+      <span class="chip" style="--c: var(--violet)"><i></i>Network</span>
+      <span class="chip" style="--c: var(--amber)"><i></i>Decision</span>
+      <span class="chip" style="--c: var(--green)"><i></i>Safe</span>
+      <span class="chip" style="--c: var(--red)"><i></i>Suspicious</span>
+    </div>
+  </header>
+  <div class="panels">
+    <section class="card" style="--accent: var(--blue)">
+      <h2><b>1</b>Catch the visit <code>background.js</code></h2>
+      <p>Runs before the page loads.</p>
+      <div class="graph" id="g1"></div>
+    </section>
+    <section class="card" style="--accent: var(--slate)">
+      <h2><b>2</b>Offline lookalike check <code>detect.js · check()</code></h2>
+      <p>Bundled list + sites you visit often.</p>
+      <div class="graph" id="g2"></div>
+    </section>
+    <section class="card" style="--accent: var(--violet)">
+      <h2><b>3</b>Online age check <code>lookup() · judge()</code></h2>
+      <p>Asks the domain registry when it was born.</p>
+      <div class="graph" id="g3"></div>
+    </section>
+    <section class="card" style="--accent: var(--red)">
+      <h2><b>4</b>Warn the user <code>warning.js</code></h2>
+      <p>Trusted sites skip all checks next time.</p>
+      <div class="graph" id="g4"></div>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  // [fill, stroke, text] per role
+  const pal = dark ? {
+    event: ['#1c2a47', '#6d97f0', '#dbe6ff'], step: ['#1f2430', '#4a5266', '#e6e9f0'],
+    net: ['#261f45', '#a08cff', '#e4ddff'], decide: ['#3a2c12', '#f0b44a', '#ffe6b8'],
+    safe: ['#123327', '#3fc98a', '#c9f5df'], bad: ['#3d1a1a', '#f07070', '#ffd6d6'], edge: '#5c6578',
+  } : {
+    event: ['#e8effd', '#3b6fd8', '#1b3a7a'], step: ['#f4f5f8', '#c4c9d4', '#1d2330'],
+    net: ['#efebff', '#7a5af0', '#3a2580'], decide: ['#fff4e0', '#d48a12', '#6b4300'],
+    safe: ['#e3f6ec', '#1f9d63', '#0e5534'], bad: ['#fdeaea', '#d64545', '#7a1c1c'], edge: '#9aa1b1',
+  };
+  const cls = (n) => `fill:${pal[n][0]},stroke:${pal[n][1]},color:${pal[n][2]},stroke-width:1.5px`;
+
+  const g1 = `
+  A([User opens a URL]) --> B["<b>onBeforeNavigate</b>"]
+  B --> C{"Top frame,<br/>http(s), not IP?"}
+  C -- no --> OK([Page loads])
+  C -- yes --> D{"Bundled, trusted, or<br/>visited 10+ times?"}
+  D -- yes --> OK
+  D -- no --> E["Offline check → ②"]
+  E --> F{"Lookalike?"}
+  F -- yes --> W["<b>tabs.update</b><br/>warning page → ④"]
+  F -- no --> G["Online check → ③"]
+  G --> H{"Flagged?"}
+  H -- no --> OK
+  H -- yes --> I{"Still on<br/>that page?"}
+  I -- yes --> W
+  I -- no --> X([Skip: user left])
+  class A,B event; class E step; class G net; class C,D,F,H,I decide; class OK,X safe; class W bad;`;
+
+  const g2 = `
+  F["<b>toUnicode()</b><br/>decode xn-- punycode"] --> H["<b>registrable()</b><br/>login.go0gle.com → go0gle.com"]
+  H --> J["<b>skeleton()</b><br/>0→o · 1→l · rn→m · Cyrillic о→o"]
+  K[("~140 bundled domains<br/>+ sites from history")] -. compared against .-> J
+  J --> L{"Brand in subdomain?<br/><i>google.com.evil.ru</i>"}
+  L -- no --> M{"Lookalike letters?<br/><i>go0gle vs google</i>"}
+  M -- no --> N{"TLD one letter off?<br/><i>paypal.co vs .com</i>"}
+  N -- no --> O{"One typo away?<br/><i>googel vs google</i>"}
+  O -- no --> SAFE([null → go to ③])
+  L & M & N & O -- yes --> HIT(["{ lookalikeOf }"])
+  class F,H,J step; class K net; class L,M,N,O decide; class SAFE safe; class HIT bad;`;
+
+  const g3 = `
+  Q{"Verdict<br/>cached?"} -- yes --> R([Use cached verdict])
+  Q -- no --> S["Ask <b>rdap.org</b><br/>registration date"]
+  S --> T{"Got a<br/>date?"}
+  T -- no --> U(["Allow now,<br/>retry next visit"])
+  T -- yes --> V["<b>skeletonDomain()</b><br/>myc0olbank → mycoolbank<br/>look up its date too"]
+  V --> J1{"Under 1 year old and<br/>clean spelling older?"}
+  J1 -- yes --> L(["{ lookalikeOf }"])
+  J1 -- no --> J2{"Registered<br/>&lt; 30 days ago?"}
+  J2 -- yes --> N(["{ newDays }"])
+  J2 -- no --> SAFE([Safe])
+  class S,V net; class Q,T,J1,J2 decide; class R step; class U,SAFE safe; class L,N bad;`;
+
+  const g4 = `
+  Q["<b>warning.html</b><br/>validates URL params"] --> W{"Reason?"}
+  W -- lookalike --> A1["Looks like <b>google.com</b>"]
+  W -- new domain --> A2["Registered<br/>N days ago"]
+  A1 & A2 --> R{"User clicks"}
+  R -- "Go to real site<br/>(lookalike only)" --> S([Open real site])
+  R -- "Go back" --> T([Back / close tab])
+  R -- "I trust it" --> U["Save to<br/>trusted list"]
+  U --> V([Continue to site])
+  class Q,A1,A2 bad; class W,R decide; class U step; class S,T,V safe;`;
+
+  const defs = ['event', 'step', 'net', 'decide', 'safe', 'bad'].map((n) => `classDef ${n} ${cls(n)};`).join('\n');
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'loose',
+    flowchart: { curve: 'basis', nodeSpacing: 20, rankSpacing: 28, padding: 12, htmlLabels: true },
+    themeVariables: {
+      fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px',
+      primaryTextColor: dark ? '#e6e9f0' : '#1d2330',
+      lineColor: pal.edge,
+      edgeLabelBackground: dark ? '#171b23' : '#ffffff',
+    },
+  });
+  for (const [id, body] of [['g1', g1], ['g2', g2], ['g3', g3], ['g4', g4]]) {
+    const src = `flowchart TD\n${body}\n${defs}\nlinkStyle default stroke:${pal.edge},stroke-width:1.5px`;
+    const el = document.getElementById(id);
+    el.innerHTML = (await mermaid.render(id + 's', src)).svg;
+    el.firstElementChild.setAttribute('preserveAspectRatio', 'xMidYMin meet'); // pin to top of panel
+  }
+</script>
+</html>

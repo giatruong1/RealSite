@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Possible fake site · RealSite</title>
+<link rel="icon" href="icons/icon32.png">
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 34rem; margin: 12vh auto; padding: 0 1rem; }
+  h1 { color: #c62828; font-size: 1.6rem; }
+  code { font-size: 1.15em; font-weight: 700; word-break: break-all; }
+  .row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
+  button { font: inherit; padding: .6rem 1rem; border-radius: 6px; border: 1px solid #8888; cursor: pointer; }
+  #real { background: #1b5e20; color: #fff; border-color: #1b5e20; }
+  #trust { background: none; border: none; text-decoration: underline; opacity: .75; }
+</style>
+<h1>Possible fake site blocked</h1>
+<p>You were going to <code id="host"></code></p>
+<p id="why-like" hidden>It looks like <code id="like"></code> but it is a different site.</p>
+<p id="why-new" hidden>This domain was registered only <b id="days"></b> day(s) ago. Brand-new domains are often scams.</p>
+<div class="row">
+  <button id="real" autofocus></button>
+  <button id="back">Go back</button>
+  <button id="trust">I trust this site, continue</button>
+</div>
+<script type="module" src="warning.js"></script>
+</html>
