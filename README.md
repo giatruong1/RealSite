@@ -2,9 +2,13 @@
 
 # RealSite
 
+[![tests](https://github.com/giatruong1/RealSite/actions/workflows/test.yml/badge.svg)](https://github.com/giatruong1/RealSite/actions/workflows/test.yml)
+
 A browser extension that warns you **before** a fake lookalike site loads, such as `go0gle.com` instead of `google.com` or `paypa1.com` instead of `paypal.com`.
 
 It runs in the background whenever the browser is open. Nothing to start, no account, no build step.
+
+![Typing go0gle.com and paypa1.com: RealSite blocks both before they load](demo.gif)
 
 ## Install
 
@@ -71,6 +75,8 @@ node test.mjs
 
 It prints `ok` when every detection rule passes. Needs Node 18 or newer.
 
+GitHub Actions runs the same test on every push ([`.github/workflows/test.yml`](.github/workflows/test.yml)). The badge at the top shows the latest result.
+
 ## Known limits
 
 - It protects only the browser it's installed in, not other apps on your computer.
@@ -90,3 +96,5 @@ It prints `ok` when every detection rule passes. Needs Node 18 or newer.
 | `warning.html`, `warning.js` | The warning page |
 | `test.mjs` | Self-check for the detection rules |
 | `flow.html` | Diagram of how a visit flows through the checks |
+| `demo.gif` | The demo at the top of this page |
+| `.github/workflows/test.yml` | Runs the tests on GitHub for every push |
